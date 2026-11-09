@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - NABZ SNACK{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{{ url_for('catalog') }}" class="btn btn-fire-outline btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Kembali ke Katalog
+        </a>
+    </div>
+
+    <div class="card-premium p-4 p-md-5">
+        <div class="row g-4 lg-g-5">
+            <!-- Product Image -->
+            <div class="col-md-6 text-center">
+                <div class="rounded-3 overflow-hidden border border-secondary border-opacity-25 bg-light" style="max-height: 400px; display: inline-block; width: 100%;">
+                    <img src="{{ product.image_url or url_for('static', filename='images/demo_product.png') }}" 
+                         alt="{{ product.name }}" 
+                         class="img-fluid" 
+                         style="max-height: 400px; width: 100%; object-fit: cover;">
+                </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="col-md-6 d-flex flex-column justify-content-between">
+                <div>
+                    <span class="badge bg-light border border-secondary border-opacity-50 text-primary px-3 py-2 rounded-pill mb-2">
+                        {{ product.category }}
+                    </span>
+                    <h1 class="text-dark fw-bold display-6 mb-2">{{ product.name }}</h1>
+                    
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="fs-3 fw-bold text-success">Rp {{ "{:,.0f}".format(product.price).replace(',', '.') }}</span>
+                        <span class="badge {% if product.stock > 10 %}bg-success{% elif product.stock > 0 %}bg-warning text-dark{% else %}bg-danger{% endif %} text-uppercase">
+                            {% if product.stock > 0 %}Stok: {{ product.stock }} unit{% else %}Stok Habis{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Spicy level -->
+                    <div class="mb-4 d-flex align-items-center gap-2 bg-light p-2.5 rounded border border-secondary border-opacity-10">
+                        <span class="small text-muted font-semibold"><i class="fas fa-pepper-hot text-success me-1"></i> Tingkat Kepedasan:</span>
+                        <div class="spicy-level-indicator">
+                            {% for i in range(1, 6) %}
+                                <i class="fas fa-leaf chili-icon {% if i <= product.spicy_level %}active{% endif %}" style="font-size: 1.1rem;"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="small text-success fw-bold font-monospace">Lvl {{ product.spicy_level }}</span>
+                    </div>
+
+                    <h5 class="text-dark fw-bold mb-2">Deskripsi Produk</h5>
+                    <p class="text-muted leading-relaxed mb-4">
+                        {{ product.description or 'Nikmati kelezatan cemilan premium NABZ SNACK yang dibuat higienis dari bahan-bahan pilihan berkualitas tinggi dengan bumbu pedas rempah tradisional yang gurih dan renyah.' }}
+                    </p>
+                </div>
+
+                <!-- Add to Cart Form -->
+                <div class="mt-4 border-top border-secondary border-opacity-25 pt-4">
+                    {% if product.stock > 0 %}
+                        <form action="{{ url_for('cart_add', product_id=product.id) }}" method="POST" class="row g-3 align-items-center">
+                            <div class="col-sm-4">
+                                <label for="quantity" class="form-label text-muted small mb-1">Jumlah</label>
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-outline-secondary text-dark border-secondary border-opacity-25" onclick="adjustQty(-1)">−</button>
+                                    <input type="number" name="quantity" id="quantity" class="form-control bg-white text-dark text-center border-secondary border-opacity-25" value="1" min="1" max="{{ product.stock }}" required>
+                                    <button type="button" class="btn btn-outline-secondary text-dark border-secondary border-opacity-25" onclick="adjustQty(1)">+</button>
+                                </div>
+                            </div>
+                            <div class="col-sm-8 pt-3 pt-sm-0">
+                                <label class="d-none d-sm-block mb-1">&nbsp;</label>
+                                <button type="submit" class="btn btn-fire w-100 py-2.5 d-flex align-items-center justify-content-center gap-2">
+                                    <i class="fas fa-shopping-basket"></i> Tambah Ke Keranjang
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-secondary w-100 py-3" disabled>
+                            <i class="fas fa-times-circle me-1"></i> Produk Ini Sedang Habis
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function adjustQty(delta) {
+        const qtyInput = document.getElementById('quantity');
+        if (!qtyInput) return;
+        
+        let val = parseInt(qtyInput.value) || 1;
+        val += delta;
+        
+        const min = parseInt(qtyInput.min) || 1;
+        const max = parseInt(qtyInput.max) || 1;
+        
+        if (val < min) val = min;
+        if (val > max) val = max;
+        
+        qtyInput.value = val;
+    }
+</script>
+{% endblock %}

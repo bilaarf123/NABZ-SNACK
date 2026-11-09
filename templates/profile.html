@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil Saya - NABZ SNACK{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card-premium p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <span class="fs-1 text-success"><i class="fas fa-user-circle"></i></span>
+                    <h2 class="text-dark fw-bold mt-2">Profil Pengguna</h2>
+                    <p class="text-muted">Kelola akun dan pantau aktivitas belanja Anda</p>
+                </div>
+
+                <div class="border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-semibold">Username:</div>
+                        <div class="col-sm-8 text-dark font-monospace fw-bold">{{ user.username }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-semibold">Email:</div>
+                        <div class="col-sm-8 text-dark">{{ user.email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-semibold">Peran (Role):</div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-success text-capitalize text-white">
+                                {{ user.role }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-semibold">Terdaftar Sejak:</div>
+                        <div class="col-sm-8 text-muted">{{ user.created_at.strftime('%d %B %Y') if user.created_at else '-' }}</div>
+                    </div>
+                </div>
+
+                <h5 class="text-dark fw-bold mb-3"><i class="fas fa-chart-bar text-success me-2"></i>Statistik Belanja</h5>
+                <div class="row text-center mb-4">
+                    <div class="col-6 mb-3">
+                        <div class="bg-light border border-secondary border-opacity-10 p-3 rounded">
+                            <div class="text-success fw-bold fs-4">{{ transaction_count }}</div>
+                            <div class="text-muted small">Total Pesanan</div>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="bg-light border border-secondary border-opacity-10 p-3 rounded">
+                            <div class="text-success fw-bold fs-5">Rp {{ "{:,.0f}".format(total_spent).replace(',', '.') }}</div>
+                            <div class="text-muted small">Total Pengeluaran</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mt-4">
+                    <a href="{% if user.role == 'customer' %}{{ url_for('customer_dashboard') }}{% elif user.role == 'cashier' %}{{ url_for('cashier_dashboard') }}{% else %}{{ url_for('admin_dashboard') }}{% endif %}" class="btn btn-fire flex-grow-1">
+                        <i class="fas fa-home me-1"></i> Dashboard Utama
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-fire-outline flex-grow-1">
+                        <i class="fas fa-sign-out-alt me-1"></i> Keluar Akun
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

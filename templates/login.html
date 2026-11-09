@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Masuk - NABZ SNACK{% endblock %}
+
+{% block content %}
+<style>
+    .login-wrapper {
+        min-height: calc(100vh - 160px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+    }
+    
+    .login-card {
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #cbd5e1);
+        border-radius: 20px;
+        padding: 3rem 2.5rem;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: var(--shadow-glow-intense, 0 12px 40px rgba(15, 23, 42, 0.1));
+        backdrop-filter: blur(10px);
+    }
+    
+    .login-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        text-align: center;
+        background: linear-gradient(135deg, #059669, #0d9488);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    
+    .login-subtitle {
+        color: var(--text-muted, #475569);
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+    }
+    
+    .custom-flash {
+        background-color: #f0fdf4;
+        border-left: 4px solid #059669;
+        padding: 1rem 1.5rem;
+        margin-bottom: 2rem;
+        color: #166534;
+        font-weight: 500;
+        font-size: 0.95rem;
+        border-radius: 6px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .form-label-custom {
+        color: var(--text-light, #0f172a);
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control-custom {
+        background-color: #ffffff;
+        border: 1px solid var(--border-color, #cbd5e1);
+        color: var(--text-light, #0f172a);
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control-custom:focus {
+        border-color: #059669;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18);
+        background-color: #ffffff;
+        color: #0f172a;
+        outline: none;
+    }
+    
+    .form-control-custom::placeholder {
+        color: #94a3b8;
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, #059669, #0d9488);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 0.85rem;
+        font-weight: 700;
+        width: 100%;
+        margin-top: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(5, 150, 105, 0.25);
+    }
+    
+    .btn-login:hover {
+        background: linear-gradient(135deg, #047857, #0f766e);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 22px rgba(5, 150, 105, 0.35);
+        color: white;
+    }
+    
+    /* Hide the global flash messages since we are putting them inside the card */
+    .container.mt-4 > .alert {
+        display: none !important;
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="text-center mb-2">
+            <span class="fs-1" style="color: #059669;"><i class="fas fa-sign-in-alt"></i></span>
+        </div>
+        <div class="login-title">Selamat Datang</div>
+        <div class="login-subtitle">Penjualan Toko Online NABZ SNACK</div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="custom-flash" {% if category == 'error' %}style="border-left-color: #dc2626; background: #fef2f2; color: #991b1b;"{% elif category == 'success' %}style="border-left-color: #059669; background: #f0fdf4; color: #166534;"{% endif %}>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="custom-flash">
+                    <i class="fas fa-info-circle me-1"></i> Silakan masuk untuk mengakses halaman ini.
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="mb-3">
+                <label for="username" class="form-label form-label-custom">Username</label>
+                <input type="text" name="username" id="username" class="form-control form-control-custom" placeholder="Masukkan username" required>
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="form-label form-label-custom">Kata Sandi</label>
+                <input type="password" name="password" id="password" class="form-control form-control-custom" placeholder="Masukkan kata sandi" required>
+            </div>
+            
+            <button type="submit" class="btn btn-login"><i class="fas fa-sign-in-alt me-2"></i>Masuk</button>
+            
+            <div class="text-center mt-3">
+                <span style="color: var(--text-muted, #475569); font-size: 0.95rem;">Belum punya akun? <a href="{{ url_for('register') }}" style="color: #059669; font-weight: 700; text-decoration: none;">Daftar di sini</a></span>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

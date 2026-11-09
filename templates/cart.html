@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Keranjang Belanja - NABZ SNACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-page-wrapper {
+        min-height: 70vh;
+        padding: 2rem 0 4rem;
+    }
+    .cart-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .cart-header h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .cart-back-btn {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .cart-back-btn:hover {
+        background: #f1f5f9;
+        border-color: #059669;
+        color: #059669;
+    }
+    .cart-item-row {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: background 0.2s;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    }
+    .cart-item-row:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+    }
+    .cart-item-icon {
+        width: 50px;
+        height: 50px;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name {
+        font-weight: 600;
+        color: #0f172a;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .cart-item-price { font-size: 0.82rem; color: #475569; }
+    .cart-qty-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+    .qty-btn {
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: #e2e8f0;
+        color: #0f172a;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+        font-weight: 700;
+    }
+    .qty-btn:hover { background: #059669; border-color: #059669; color: #fff; }
+    .qty-val {
+        min-width: 28px;
+        text-align: center;
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+    .cart-item-subtotal {
+        font-weight: 700;
+        color: #059669;
+        font-size: 0.9rem;
+        min-width: 80px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+    .btn-remove-item {
+        background: transparent;
+        border: 1px solid rgba(220,53,69,0.3);
+        color: #dc3545;
+        border-radius: 8px;
+        width: 32px; height: 32px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    .btn-remove-item:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+    .cart-empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #475569;
+    }
+    .cart-empty-state .icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; color: #059669; }
+    .cart-empty-state h5 { color: #0f172a; font-weight: 700; }
+    .cart-empty-state p { font-size: 0.9rem; color: #475569; }
+    .cart-summary-card {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 16px;
+        padding: 1.5rem;
+        position: sticky;
+        top: 90px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+    }
+    .summary-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #0f172a;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #cbd5e1;
+        margin-bottom: 1rem;
+    }
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.6rem;
+        font-size: 0.88rem;
+    }
+    .summary-row .label { color: #475569; }
+    .summary-row .value { color: #0f172a; font-weight: 600; }
+    .summary-total {
+        border-top: 1px solid #cbd5e1;
+        padding-top: 1rem;
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .summary-total .label { color: #0f172a; font-weight: 700; }
+    .summary-total .value { color: #059669; font-size: 1.3rem; font-weight: 800; }
+    .form-control-dark {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        border-radius: 10px;
+    }
+    .form-control-dark:focus {
+        border-color: #059669 !important;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18) !important;
+        outline: none;
+    }
+    .form-control-dark::placeholder { color: #94a3b8; }
+    .btn-checkout-main {
+        background: linear-gradient(135deg, #059669, #0d9488);
+        border: none;
+        border-radius: 12px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 0.85rem;
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        letter-spacing: 0.3px;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+    }
+    .btn-checkout-main:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(5, 150, 105, 0.35);
+        background: linear-gradient(135deg, #047857, #0f766e);
+    }
+    .btn-checkout-main:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    .btn-clear-cart {
+        background: transparent;
+        border: 1px solid rgba(220,53,69,0.3);
+        color: #dc3545;
+        border-radius: 8px;
+        padding: 0.4rem 0.85rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-clear-cart:hover { background: #fee2e2; color: #b91c1c; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cart-page-wrapper">
+    <div class="container">
+
+        <!-- Header -->
+        <div class="cart-header">
+            <a href="{% if session.get('user_role') == 'admin' %}{{ url_for('admin_dashboard') }}{% elif session.get('user_role') == 'cashier' %}{{ url_for('cashier_dashboard') }}{% elif session.get('user_id') %}{{ url_for('customer_dashboard') }}{% else %}{{ url_for('index') }}{% endif %}" class="cart-back-btn">
+                <i class="fas fa-arrow-left"></i> Lanjut Belanja
+            </a>
+            <h1><i class="fas fa-shopping-cart text-success me-2"></i>Keranjang Belanja</h1>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cart Items Column -->
+            <div class="col-lg-7">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small">
+                        <span id="cart-items-count">{{ cart.items|map(attribute='quantity')|sum if cart and cart.items else 0 }}</span> produk di keranjang
+                    </span>
+                </div>
+
+                <!-- Cart Items List -->
+                <div id="cart-items-list">
+                    {% if not cart or not cart.items %}
+                    <div class="cart-empty-state">
+                        <div class="icon"><i class="fas fa-shopping-basket"></i></div>
+                        <h5>Keranjang Masih Kosong</h5>
+                        <p>Belum ada produk yang ditambahkan.<br>Yuk, pilih snack pedas favorit kamu!</p>
+                        <a href="{{ url_for('catalog') }}" class="btn btn-fire mt-2">
+                            <i class="fas fa-shopping-bag me-1"></i> Lihat Katalog
+                        </a>
+                    </div>
+                    {% else %}
+                        {% for item in cart.items %}
+                        <div class="cart-item-row">
+                            <div class="cart-item-icon">
+                                {% if item.product.image_url %}
+                                <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+                                {% else %}
+                                🌶️
+                                {% endif %}
+                            </div>
+                            <div class="cart-item-info">
+                                <div class="cart-item-name" title="{{ item.product.name }}">{{ item.product.name }}</div>
+                                <div class="cart-item-price">Rp {{ "{:,.0f}".format(item.product.price) }} / pcs</div>
+                            </div>
+                            <div class="cart-qty-controls">
+                                <form action="{{ url_for('cart_update', item_id=item.id) }}" method="POST" class="d-flex align-items-center mb-0 gap-2">
+                                    <input type="hidden" name="quantity" value="{{ item.quantity - 1 }}">
+                                    <button type="submit" class="qty-btn">−</button>
+                                </form>
+                                <span class="qty-val">{{ item.quantity }}</span>
+                                <form action="{{ url_for('cart_update', item_id=item.id) }}" method="POST" class="d-flex align-items-center mb-0 gap-2">
+                                    <input type="hidden" name="quantity" value="{{ item.quantity + 1 }}">
+                                    <button type="submit" class="qty-btn">+</button>
+                                </form>
+                            </div>
+                            <div class="cart-item-subtotal">Rp {{ "{:,.0f}".format(item.subtotal()) }}</div>
+                            <form action="{{ url_for('cart_remove', item_id=item.id) }}" method="POST" class="mb-0">
+                                <button type="submit" class="btn-remove-item" title="Hapus">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Summary & Checkout Column -->
+            <div class="col-lg-5">
+                <div class="cart-summary-card">
+                    <div class="summary-title">
+                        <i class="fas fa-receipt text-success me-2"></i>Ringkasan Pesanan
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="label">Jumlah Item</span>
+                        <span class="value" id="cart-count-badge">{{ cart.items|map(attribute='quantity')|sum if cart and cart.items else 0 }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="label">Subtotal</span>
+                        <span class="value" id="cart-subtotal">Rp {{ "{:,.0f}".format(cart.total_price()) if cart else 0 }}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="label">Ongkos Kirim</span>
+                        <span class="value text-success">Gratis 🎉</span>
+                    </div>
+                    <div class="summary-total">
+                        <span class="label">Total Bayar</span>
+                        <span class="value" id="cart-total-amount">Rp {{ "{:,.0f}".format(cart.total_price()) if cart else 0 }}</span>
+                    </div>
+
+                    <!-- Checkout Form -->
+                    <form action="{{ url_for('customer_checkout') }}" method="POST" id="checkout-form" class="mt-4">
+                        <div class="mb-3">
+                            <label for="buyer_name" class="form-label text-muted small fw-semibold">
+                                <i class="fas fa-user me-1"></i> Nama Penerima
+                            </label>
+                            <input type="text" name="buyer_name" id="buyer_name"
+                                   class="form-control form-control-dark"
+                                   value="{{ session.get('username', '') or '' }}" required
+                                   placeholder="Nama pembeli / penerima...">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="notes" class="form-label text-muted small fw-semibold">
+                                <i class="fas fa-sticky-note me-1"></i> Catatan (opsional)
+                            </label>
+                            <textarea name="notes" id="notes" rows="2"
+                                      class="form-control form-control-dark"
+                                      placeholder="Contoh: Makaroni level pedas manis..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-checkout-main" id="checkout-btn" {% if not cart or not cart.items %}disabled{% endif %}>
+                            <i class="fas fa-check-circle"></i>
+                            Buat Pesanan (Checkout)
+                        </button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-lock me-1"></i>
+                            Pesanan akan diproses oleh kasir Nabz Snack
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+// Logic JavaScript localStorage keranjang dihapus karena sekarang berbasis server
+</script>
+{% endblock %}

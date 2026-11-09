@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}Kasir Panel - NABZ SNACK{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h1 class="text-dark fw-bold h2 mb-1"><i class="fas fa-cash-register text-success me-2"></i>Kasir & POS NABZ SNACK</h1>
+            <p class="text-muted mb-0">Melayani transaksi langsung (POS) dan memproses pesanan online pelanggan.</p>
+        </div>
+        <div class="bg-white px-3 py-2 rounded border border-secondary border-opacity-25 text-muted">
+            Peran Aktif: <strong class="text-success text-capitalize">{{ session.get('user_role') }}</strong>
+        </div>
+    </div>
+
+    <!-- Alert Stok Kritis -->
+    {% set low_stock_products = [] %}
+    {% for prod in products %}
+        {% if prod.stock <= 5 %}
+            {% set _ = low_stock_products.append(prod) %}
+        {% endif %}
+    {% endfor %}
+    
+    {% if low_stock_products %}
+    <div class="alert alert-warning border-0 shadow-sm alert-fire mb-4" role="alert">
+        <div class="d-flex align-items-start gap-2">
+            <i class="fas fa-exclamation-triangle text-warning mt-1 fs-5"></i>
+            <div>
+                <strong class="text-dark">Peringatan Ketersediaan Stok!</strong>
+                <span class="text-muted small d-block">Beberapa produk berikut berada di bawah batas minimum (5 unit) dan perlu restock segera:</span>
+                <ul class="mb-0 mt-1 small text-dark fw-semibold">
+                    {% for p in low_stock_products %}
+                        <li>{{ p.name }} (Stok saat ini: <span class="text-danger">{{ p.stock }}</span>)</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabs Navigation for Cashier Functions -->
+    <ul class="nav nav-tabs docs-nav-tabs border-secondary border-opacity-25 mb-4" id="cashierTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pos-tab" data-bs-toggle="tab" data-bs-target="#pos-pane" type="button" role="tab" aria-controls="pos-pane" aria-selected="true">
+                <i class="fas fa-calculator me-1"></i> Point of Sale (POS) Toko
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders-pane" type="button" role="tab" aria-controls="orders-pane" aria-selected="false">
+                <i class="fas fa-spinner me-1"></i> Antrean Pesanan Online
+                {% if pending_orders_count > 0 %}
+                    <span class="badge bg-danger ms-1">{{ pending_orders_count }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="all-orders-tab" data-bs-toggle="tab" data-bs-target="#all-orders-pane" type="button" role="tab" aria-controls="all-orders-pane" aria-selected="false">
+                <i class="fas fa-history me-1"></i> Riwayat Transaksi Toko
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="cashierTabContent">
+        <!-- 1. POINT OF SALE (POS) PANE -->
+        <div class="tab-pane fade show active" id="pos-pane" role="tabpanel" aria-labelledby="pos-tab">
+            <div class="row">
+                <!-- POS Catalog (Left) -->
+                <div class="col-lg-7 mb-4">
+                    <div class="card-premium p-4">
+                        <h4 class="text-dark fw-bold mb-3"><i class="fas fa-boxes text-success me-2"></i>Menu Produk Tersedia</h4>
+                        
+                        <!-- Search for POS -->
+                        <div class="mb-3">
+                            <input type="text" id="pos-search" onkeyup="filterPosProducts()" class="form-control bg-white text-dark border-secondary border-opacity-25" placeholder="Ketik nama snack untuk mencari...">
+                        </div>
+                        
+                        <div class="row" style="max-height: 480px; overflow-y: auto; padding-right: 5px;" id="pos-products-grid">
+                            {% for prod in products %}
+                            <div class="col-md-6 mb-3 pos-product-card" data-name="{{ prod.name | lower }}" style="cursor:pointer;">
+                                <div class="card bg-white border border-secondary border-opacity-25 pos-prod-card shadow-sm" onclick="addPosItem({{ prod.id }}, '{{ prod.name }}', {{ prod.price }}, {{ prod.stock }})">
+                                    <div class="p-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <h6 class="text-dark fw-bold mb-1 text-truncate" style="max-width: 140px;">{{ prod.name }}</h6>
+                                            <span class="badge bg-danger bg-opacity-75" style="font-size: 0.7rem;">Lv {{ prod.spicy_level }}</span>
+                                        </div>
+                                        <div class="text-success fw-semibold small mb-2">Rp {{ "{:,.0f}".format(prod.price).replace(',', '.') }}</div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="small text-muted">{{ prod.category }}</span>
+                                            <span class="small {% if prod.stock > 5 %}text-muted{% else %}text-danger fw-bold{% endif %}">Stok: {{ prod.stock }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POS Cart / Invoice Form (Right) -->
+                <div class="col-lg-5">
+                    <div class="card-premium p-4">
+                        <h4 class="text-dark fw-bold mb-3 border-bottom border-secondary border-opacity-25 pb-2">
+                            <i class="fas fa-shopping-basket text-success me-2"></i>Keranjang Belanja POS
+                        </h4>
+                        
+                        <form action="{{ url_for('cashier_pos_checkout') }}" method="POST">
+                            <input type="hidden" name="pos_items" id="pos-items-input">
+                            
+                            <!-- Customer Details -->
+                            <div class="mb-3">
+                                <label for="pos_customer_name" class="form-label text-muted small fw-semibold">Nama Pembeli Offline</label>
+                                <input type="text" name="pos_customer_name" id="pos_customer_name" class="form-control form-control-sm bg-white text-dark border-secondary border-opacity-25" value="Pelanggan Umum" required>
+                            </div>
+                            
+                            <!-- POS Cart Items Table -->
+                            <div class="table-responsive mb-3" style="max-height: 250px; overflow-y: auto;">
+                                <table class="table table-sm table-premium align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Snack</th>
+                                            <th>Qty</th>
+                                            <th>Subtotal</th>
+                                            <th>Hapus</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pos-cart-list">
+                                        <!-- Appended dynamically by main.js -->
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">Belum ada item dipilih. Klik produk di sebelah kiri untuk menambahkan.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Total Price -->
+                            <div class="d-flex justify-content-between align-items-center mb-4 border-top border-secondary border-opacity-10 pt-3">
+                                <span class="text-muted fw-bold">Total Pembayaran:</span>
+                                <span class="fs-4 fw-bold text-success" id="pos-total">Rp 0</span>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-fire w-100 py-2.5" id="pos-submit-btn" disabled>
+                                <i class="fas fa-print me-1"></i> Cetak Struk & Simpan Transaksi
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ONLINE ORDER QUEUE PANE -->
+        <div class="tab-pane fade" id="orders-pane" role="tabpanel" aria-labelledby="orders-tab">
+            <div class="card-premium p-4">
+                <h4 class="text-dark fw-bold mb-3"><i class="fas fa-hourglass-half text-warning me-2"></i>Antrean Pesanan Masuk</h4>
+                
+                {% set queue_orders = [] %}
+                {% for o in transactions if o.status in ['Pending', 'Processed'] %}
+                    {% set _ = queue_orders.append(o) %}
+                {% endfor %}
+
+                {% if queue_orders %}
+                <div class="table-responsive">
+                    <table class="table table-premium table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>No. Invoice</th>
+                                <th>Tgl Masuk</th>
+                                <th>Pelanggan</th>
+                                <th>Item Pesanan</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th class="text-center">Aksi Proses</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in queue_orders %}
+                            <tr>
+                                <td class="font-monospace fw-bold">{{ order.invoice_number }}</td>
+                                <td>{{ order.created_at }}</td>
+                                <td>
+                                    <div>{{ order.customer_name }}</div>
+                                    <small class="text-muted">ID User: {{ order.customer_id or 'Guest' }}</small>
+                                </td>
+                                <td>
+                                    <ul class="mb-0 ps-3 small text-muted">
+                                        {% for item in order.items %}
+                                            <li>{{ item.product.name if item.product else 'Produk' }} (x{{ item.quantity }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td class="text-success fw-bold">Rp {{ "{:,.0f}".format(order.total_price).replace(',', '.') }}</td>
+                                <td><span class="status-badge status-{{ order.status | lower }}">{{ order.status }}</span></td>
+                                <td>
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        {% if order.status == 'Pending' %}
+                                            <a href="{{ url_for('update_order_status', trans_id=order.id, new_status='Processed') }}" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-spinner"></i> Proses
+                                            </a>
+                                            <a href="{{ url_for('update_order_status', trans_id=order.id, new_status='Cancelled') }}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-ban"></i> Tolak
+                                            </a>
+                                        {% elif order.status == 'Processed' %}
+                                            <a href="{{ url_for('update_order_status', trans_id=order.id, new_status='Completed') }}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-check-circle"></i> Selesai
+                                            </a>
+                                            <a href="{{ url_for('update_order_status', trans_id=order.id, new_status='Cancelled') }}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-ban"></i> Tolak
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-dark">Tidak Ada Antrean</h5>
+                    <p class="small mb-0">Semua pesanan online telah selesai diproses.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 3. ALL TRANSACTIONS HISTORY PANE -->
+        <div class="tab-pane fade" id="all-orders-pane" role="tabpanel" aria-labelledby="all-orders-tab">
+            <div class="card-premium p-4">
+                <h4 class="text-dark fw-bold mb-3"><i class="fas fa-list text-success me-2"></i>Daftar Riwayat Penjualan</h4>
+                
+                {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-premium table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>No. Invoice</th>
+                                <th>Tanggal</th>
+                                <th>Pembeli</th>
+                                <th>Dilayani Oleh</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transactions %}
+                            <tr>
+                                <td class="font-monospace fw-bold text-success">{{ t.invoice_number }}</td>
+                                <td>{{ t.created_at }}</td>
+                                <td>{{ t.customer_name }}</td>
+                                <td>
+                                    {% if t.cashier %}
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">{{ t.cashier.username }} (Kasir)</span>
+                                    {% else %}
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">Pelanggan Online</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-bold">Rp {{ "{:,.0f}".format(t.total_price).replace(',', '.') }}</td>
+                                <td><span class="status-badge status-{{ t.status | lower }}">{% if t.status == 'Completed' %}Berhasil Membeli{% else %}{{ t.status }}{% endif %}</span></td>
+                                <td><small class="text-muted">{{ t.notes or '-' }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <p class="small mb-0">Belum ada transaksi tersimpan dalam basis data.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filterPosProducts() {
+        const query = document.getElementById('pos-search').value.toLowerCase();
+        const cards = document.querySelectorAll('.pos-product-card');
+        
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            if (name.includes(query)) {
+                card.classList.remove('d-none');
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+    }
+
+    // POS cart handling
+    let posCart = [];
+
+    // Add item to POS cart
+    function addPosItem(id, name, price, stock) {
+        const existing = posCart.find(item => item.id === id);
+        if (existing) {
+            if (existing.qty + 1 > stock) {
+                alert(`Stok tidak cukup untuk ${name}`);
+                return;
+            }
+            existing.qty += 1;
+        } else {
+            if (stock < 1) {
+                alert(`Stok tidak cukup untuk ${name}`);
+                return;
+            }
+            posCart.push({id, name, price, qty: 1, stock});
+        }
+        renderPosCart();
+    }
+
+    // Remove item from cart
+    function removePosItem(id) {
+        posCart = posCart.filter(item => item.id !== id);
+        renderPosCart();
+    }
+
+    // Update quantity
+    function updatePosQty(id, delta) {
+        const item = posCart.find(i => i.id === id);
+        if (!item) return;
+        const newQty = item.qty + delta;
+        if (newQty < 1) {
+            removePosItem(id);
+            return;
+        }
+        if (newQty > item.stock) {
+            alert(`Stok tidak cukup untuk ${item.name}`);
+            return;
+        }
+        item.qty = newQty;
+        renderPosCart();
+    }
+
+    // Render cart table and total
+    function renderPosCart() {
+        const tbody = document.getElementById('pos-cart-list');
+        tbody.innerHTML = '';
+        let total = 0;
+        if (posCart.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Belum ada item dipilih. Klik produk di sebelah kiri untuk menambahkan.</td></tr>`;
+        } else {
+            posCart.forEach(item => {
+                const subtotal = item.price * item.qty;
+                total += subtotal;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="updatePosQty(${item.id}, -1)"><i class="fas fa-minus"></i></button>
+                        ${item.qty}
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" onclick="updatePosQty(${item.id}, 1)"><i class="fas fa-plus"></i></button>
+                    </td>
+                    <td class="text-end">Rp ${subtotal.toLocaleString('id-ID')}</td>
+                    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removePosItem(${item.id})"><i class="fas fa-trash"></i></button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        document.getElementById('pos-total').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        document.getElementById('pos-items-input').value = JSON.stringify(posCart);
+        document.getElementById('pos-submit-btn').disabled = posCart.length === 0;
+    }
+</script>
+{% endblock %}

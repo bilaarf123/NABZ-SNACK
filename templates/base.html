@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NABZ SNACK - TOKO PENJUALAN ONLINE{% endblock %}</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Implementasi System Development Life Cycle (SDLC) untuk Toko Penjualan Online NABZ SNACK. Solusi manajemen transaksi, stok real-time, dan kasir online.">
+    <meta name="author" content="NABZ SNACK">
+    
+    <!-- Google Fonts (Outfit) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Style CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom navbar-light">
+        <div class="container">
+            <a class="navbar-brand navbar-brand-custom" href="{{ url_for('index') }}" id="nav-logo">
+                <i class="fas fa-leaf text-success animate-pulse"></i> NABZ<span>SNACK</span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-custom {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}" id="nav-home">Beranda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-custom {% if request.endpoint == 'catalog' %}active{% endif %}" href="{{ url_for('catalog') }}" id="nav-catalog">Katalog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-custom {% if request.endpoint == 'cart_page' %}active{% endif %} d-inline-flex align-items-center gap-1" href="{{ url_for('cart_page') }}" id="nav-cart">
+                            <i class="fas fa-shopping-cart me-1"></i>Keranjang
+                            <span class="badge bg-danger rounded-pill" id="cart-count-badge" style="font-size: 0.75rem; padding: 0.25em 0.5em;">{{ cart_count }}</span>
+                        </a>
+                    </li>
+
+                    {% if session.get('user_id') %}
+                        <!-- User is logged in -->
+                        {% if session.get('user_role') == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom {% if 'admin' in request.path %}active{% endif %}" href="{{ url_for('admin_dashboard') }}" id="nav-admin-dash"><i class="fas fa-chart-line me-1"></i> Admin Panel</a>
+                            </li>
+                        {% elif session.get('user_role') == 'cashier' %}
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom {% if 'cashier' in request.path %}active{% endif %}" href="{{ url_for('cashier_dashboard') }}" id="nav-cashier-dash"><i class="fas fa-cash-register me-1"></i> Kasir Panel</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom {% if 'customer' in request.path %}active{% endif %}" href="{{ url_for('customer_dashboard') }}" id="nav-customer-dash"><i class="fas fa-shopping-bag me-1"></i> Belanja</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link nav-link-custom {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}" id="nav-profile"><i class="fas fa-user-circle me-1"></i> Profil</a>
+                        </li>
+                        
+                        <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
+                            <a class="nav-link nav-link-custom text-danger fw-bold" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Keluar</a>
+                        </li>
+                    {% else %}
+                        <!-- Guest -->
+                        <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
+                            <a class="nav-link nav-link-custom {% if request.endpoint == 'admin_login' %}active{% endif %}" href="{{ url_for('admin_login') }}">Login Admin</a>
+                        </li>
+                        <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                            <a class="nav-link nav-link-custom {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}" id="nav-login">Masuk</a>
+                        </li>
+                        <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                            <a class="btn btn-fire py-1 px-3" href="{{ url_for('register') }}" id="nav-register">Daftar Akun</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'error' %}danger{% else %}{{ category }}{% endif %} alert-dismissible fade show border-0 alert-fire" role="alert">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas {% if category == 'error' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                            <div>{{ message }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <h5 class="text-dark fw-bold mb-1"><i class="fas fa-leaf text-success me-1"></i> NABZ SNACK</h5>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="mb-0 small text-muted">&copy; 2026 Toko Penjualan Online NABZ SNACK. All Rights Reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Buy Now Modal Overlay -->
+    <div class="buy-now-overlay" id="buyNowOverlay">
+        <div class="buy-now-modal">
+            <div class="buy-now-modal-header">
+                <h5 class="text-white fw-bold mb-0"><i class="fas fa-bolt text-warning me-2"></i>Beli Langsung</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeBuyNowModal()"></button>
+            </div>
+            <div class="buy-now-modal-body">
+                <form action="{{ url_for('customer_checkout') }}" method="POST" id="buy-now-form">
+                    <input type="hidden" name="cart_items" id="buy-now-items">
+                    
+                    <div class="buy-now-product-row">
+                        <div class="buy-now-product-icon">🔥</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <h6 class="text-dark fw-bold mb-1 text-truncate" id="buy-now-name">Nama Produk</h6>
+                            <div class="text-success small fw-semibold" id="buy-now-price">Rp 0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="qty-control-group">
+                        <span class="text-muted small fw-semibold">Jumlah</span>
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button" class="qty-btn-modal" onclick="updateBuyNowQty(-1)">−</button>
+                            <span class="qty-display" id="buy-now-qty">1</span>
+                            <button type="button" class="qty-btn-modal" onclick="updateBuyNowQty(1)">+</button>
+                        </div>
+                    </div>
+                    <div class="text-end mb-3" style="margin-top: -10px;">
+                        <small class="text-muted" id="buy-now-stock-info">Tersedia: 0</small>
+                    </div>
+                    
+                    <div class="buy-now-total-row">
+                        <span class="text-muted">Total Pembayaran</span>
+                        <span class="fs-4 fw-bold text-success" id="buy-now-total">Rp 0</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold">Nama Pembeli / Penerima</label>
+                        <input type="text" name="buyer_name" class="form-control form-control-sm bg-white text-dark border-secondary" value="{{ session.get('username') or '' }}" placeholder="Masukkan nama Anda..." required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-semibold">Catatan (opsional)</label>
+                        <input type="text" name="notes" class="form-control form-control-sm bg-white text-dark border-secondary" placeholder="Contoh: Level pedas dikurangi...">
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary flex-grow-1 rounded-pill" onclick="closeBuyNowModal()">Batal</button>
+                        <button type="submit" class="btn btn-buy-now flex-grow-1" id="btn-confirm-buy"><i class="fas fa-check-circle me-1 text-white"></i>Konfirmasi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Main JS (v2 = cache bust setelah hapus localStorage cart) -->
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2"></script>
+    
+    <script>
+    function openTab(tabId) {
+        if (window.location.pathname.includes('/admin/dashboard')) {
+            const triggerEl = document.querySelector(`button[data-bs-target="${tabId}"]`);
+            if (triggerEl) {
+                const tab = new bootstrap.Tab(triggerEl);
+                tab.show();
+            }
+        }
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        if (window.location.hash && window.location.pathname.includes('/admin/dashboard')) {
+            openTab(window.location.hash);
+        }
+    });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

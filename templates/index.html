@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}NABZ SNACK - TOKO PENJUALAN ONLINE{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center text-md-start">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <span class="badge badge-spicy-main mb-3 text-uppercase"><i class="fas fa-leaf me-1"></i> Cemilan Pilihan Alami</span>
+                <h1 class="display-5 fw-bold text-dark mb-3" style="line-height: 1.2; font-size: 2.4rem;">
+                    Toko Penjualan Online <span style="color: #059669;">NABZ SNACK</span>
+                </h1>
+                <p class="lead text-secondary mb-4" style="max-width: 600px;">
+                    Nikmati aneka cemilan berkualitas tinggi &mdash; Basreng, Makaroni, Keripik Singkong, Seblak Kering, dan masih banyak lagi! Pesan online dengan mudah, cepat, dan aman langsung dari rumah Anda.
+                </p>
+                <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+                    {% if session.get('user_id') %}
+                        {% if session.get('user_role') == 'customer' %}
+                            <a href="{{ url_for('customer_dashboard') }}" class="btn btn-fire btn-lg" id="hero-order-now"><i class="fas fa-shopping-bag me-2"></i>Mulai Pesan Sekarang</a>
+                        {% elif session.get('user_role') == 'cashier' %}
+                            <a href="{{ url_for('cashier_dashboard') }}" class="btn btn-fire btn-lg" id="hero-pos"><i class="fas fa-cash-register me-2"></i>Buka POS Kasir</a>
+                        {% else %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-fire btn-lg" id="hero-admin"><i class="fas fa-chart-line me-2"></i>Buka Admin Panel</a>
+                        {% endif %}
+                    {% else %}
+                        <a href="#katalog-produk" class="btn btn-fire btn-lg" id="hero-lihat-produk"><i class="fas fa-store me-2"></i>Lihat Produk</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-fire-outline btn-lg" id="hero-register">Daftar Akun</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="{{ url_for('static', filename='images/basreng_pedas.png') }}" class="img-fluid rounded-circle shadow border border-3 border-success-subtle animate-bounce" style="max-height: 380px; object-fit: cover; aspect-ratio: 1/1;" alt="Basreng Pedas">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5" style="background-color: var(--bg-dark);">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="p-4 card-premium">
+                    <div class="stat-icon mb-3"><i class="fas fa-shipping-fast text-success"></i></div>
+                    <h4 class="text-dark fw-bold mb-2">Pemesanan Online</h4>
+                    <p class="text-muted mb-0 small">Pilih produk, masukkan ke keranjang, dan pesan langsung secara online dari mana saja kapan saja.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4 mb-md-0">
+                <div class="p-4 card-premium">
+                    <div class="stat-icon mb-3"><i class="fas fa-boxes text-success"></i></div>
+                    <h4 class="text-dark fw-bold mb-2">Stok Terkini & Akurat</h4>
+                    <p class="text-muted mb-0 small">Stok diperbarui otomatis setiap transaksi sehingga Anda selalu mendapat informasi ketersediaan produk yang akurat.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 card-premium">
+                    <div class="stat-icon mb-3"><i class="fas fa-shield-alt text-success"></i></div>
+                    <h4 class="text-dark fw-bold mb-2">Transaksi Aman</h4>
+                    <p class="text-muted mb-0 small">Setiap pemesanan diproses dan dikonfirmasi oleh kasir toko kami sebelum disiapkan untuk Anda.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== KATALOG PRODUK ===================== -->
+<section class="py-5" id="katalog-produk">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="text-dark fw-bold"><i class="fas fa-leaf text-success me-2"></i>Katalog Produk NABZ SNACK</h2>
+            <p class="text-muted">Temukan cemilan favoritmu! Klik <strong class="text-success">Tambah Keranjang</strong> untuk memesan.</p>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="card-premium p-4 mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-secondary border-opacity-25 text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="guest-search" class="form-control bg-white text-dark border-secondary border-opacity-25" placeholder="Cari nama produk..." onkeyup="filterGuestProducts()">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-fire category-btn-guest active" onclick="filterGuestCategory('all', this)" id="cat-all">Semua</button>
+                        <button class="btn btn-sm btn-fire-outline category-btn-guest" onclick="filterGuestCategory('Basreng', this)">Basreng</button>
+                        <button class="btn btn-sm btn-fire-outline category-btn-guest" onclick="filterGuestCategory('Makaroni', this)">Makaroni</button>
+                        <button class="btn btn-sm btn-fire-outline category-btn-guest" onclick="filterGuestCategory('Keripik', this)">Keripik</button>
+                        <button class="btn btn-sm btn-fire-outline category-btn-guest" onclick="filterGuestCategory('Seblak', this)">Seblak</button>
+                        <button class="btn btn-sm btn-fire-outline category-btn-guest" onclick="filterGuestCategory('Pilus', this)">Pilus</button>
+                        <button class="btn btn-sm btn-fire-outline category-btn-guest" onclick="filterGuestCategory('Usus', this)">Usus</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row" id="guest-products-grid">
+            {% for prod in products %}
+            <div class="col-lg-4 col-md-6 mb-4 guest-product-item" data-name="{{ prod.name | lower }}" data-category="{{ prod.category }}">
+                <div class="card-premium h-100">
+                    <div class="card-img-container">
+                        <a href="{{ url_for('product_detail', product_id=prod.id) }}">
+                            <img src="{{ prod.image_url or url_for('static', filename='images/demo_product.png') }}" class="card-img-premium" alt="{{ prod.name }}">
+                        </a>
+                        <span class="card-badge">{{ prod.category }}</span>
+                    </div>
+                    <div class="p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="text-dark fw-bold mb-0" style="font-size: 1rem;">
+                                <a href="{{ url_for('product_detail', product_id=prod.id) }}" class="text-decoration-none text-dark">{{ prod.name }}</a>
+                            </h5>
+                            <span class="text-success fw-bold fs-6 ms-2 text-nowrap">Rp {{ "{:,.0f}".format(prod.price).replace(',', '.') }}</span>
+                        </div>
+                        <p class="text-muted small mb-3" style="min-height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                            {{ prod.description or 'Cemilan snack pedas berkualitas tinggi diolah higienis dengan bumbu rempah asli.' }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-3 mt-auto">
+                            <div class="spicy-level-indicator">
+                                <span class="small text-muted me-1">Pedas:</span>
+                                {% for i in range(1, 6) %}
+                                    <i class="fas fa-leaf chili-icon {% if i <= prod.spicy_level %}active{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <span class="small {% if prod.stock > 10 %}text-success{% elif prod.stock > 0 %}text-warning{% else %}text-danger{% endif %} fw-semibold">
+                                Stok: {{ prod.stock }}
+                            </span>
+                        </div>
+
+                        {% if prod.stock > 0 %}
+                            <div class="d-flex gap-2 w-100 mt-auto">
+                                <form action="{{ url_for('cart_add', product_id=prod.id) }}" method="POST" class="w-100">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-fire w-100 py-2 d-flex align-items-center justify-content-center gap-2" title="Tambah Keranjang">
+                                        <i class="fas fa-cart-plus"></i> Tambah Keranjang
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <button class="btn btn-secondary w-100 py-2" disabled>
+                                <i class="fas fa-times-circle"></i> Stok Habis
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Empty state -->
+            <div class="col-12 text-center py-5 d-none" id="guest-no-products">
+                <i class="fas fa-search-minus fa-3x text-muted mb-3"></i>
+                <h5 class="text-dark">Tidak Ada Produk yang Cocok</h5>
+                <p class="text-muted">Coba ubah kata pencarian atau filter kategori Anda.</p>
+            </div>
+        </div>
+
+        <!-- CTA Login Banner -->
+        {% if not session.get('user_id') %}
+        <div class="mt-5 p-4 card-premium text-center" style="border: 1px solid var(--primary-fire); background: #f0fdf4;">
+            <i class="fas fa-shopping-basket fa-2x text-success mb-3"></i>
+            <h4 class="text-dark fw-bold mb-2">Siap Memesan Cemilan?</h4>
+            <p class="text-muted mb-3">Anda bisa langsung checkout pesanan Anda sebagai tamu tanpa perlu login, atau masuk untuk menyimpan riwayat pesanan.</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="{{ url_for('cart_page') }}" class="btn btn-fire btn-lg" id="cta-cart"><i class="fas fa-shopping-cart me-2"></i>Buka Keranjang</a>
+                <a href="{{ url_for('login') }}" class="btn btn-fire-outline btn-lg" id="cta-login">Masuk Akun</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let activeGuestCategory = 'all';
+
+    function filterGuestCategory(cat, btn) {
+        activeGuestCategory = cat;
+        document.querySelectorAll('.category-btn-guest').forEach(b => {
+            b.classList.remove('active');
+            b.classList.add('btn-fire-outline');
+            b.classList.remove('btn-fire');
+        });
+        btn.classList.add('active', 'btn-fire');
+        btn.classList.remove('btn-fire-outline');
+        filterGuestProducts();
+    }
+
+    function filterGuestProducts() {
+        const searchVal = document.getElementById('guest-search').value.toLowerCase();
+        const items = document.querySelectorAll('.guest-product-item');
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            const name = item.getAttribute('data-name');
+            const category = item.getAttribute('data-category');
+            const matchSearch = name.includes(searchVal);
+            const matchCategory = (activeGuestCategory === 'all' || category === activeGuestCategory);
+
+            if (matchSearch && matchCategory) {
+                item.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                item.classList.add('d-none');
+            }
+        });
+
+        const noMsg = document.getElementById('guest-no-products');
+        if (visibleCount === 0) {
+            noMsg.classList.remove('d-none');
+        } else {
+            noMsg.classList.add('d-none');
+        }
+    }
+</script>
+{% endblock %}

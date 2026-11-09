@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout Berhasil - NABZ SNACK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-page {
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+    .success-card {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 20px;
+        padding: 2.5rem;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+    }
+    .success-icon {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: #d1fae5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+        color: #059669;
+        animation: scaleIn 0.5s ease-out;
+    }
+    @keyframes scaleIn {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.2); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .success-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+    .success-subtitle {
+        color: #475569;
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+    }
+    .invoice-box {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 14px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        text-align: left;
+    }
+    .invoice-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        font-size: 0.88rem;
+    }
+    .invoice-row .lbl { color: #475569; }
+    .invoice-row .val { color: #0f172a; font-weight: 600; }
+    .invoice-row.total-row {
+        border-top: 1px solid #cbd5e1;
+        margin-top: 0.5rem;
+        padding-top: 0.75rem;
+    }
+    .invoice-row.total-row .val {
+        color: #059669;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+    .invoice-number-badge {
+        display: inline-block;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-family: monospace;
+        font-weight: 700;
+        color: #059669;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        letter-spacing: 1px;
+    }
+    .items-list {
+        text-align: left;
+        margin-bottom: 1rem;
+    }
+    .items-list .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 0.85rem;
+    }
+    .items-list .item-row:last-child { border-bottom: none; }
+    .items-list .item-name { color: #0f172a; flex: 1; }
+    .items-list .item-qty { color: #475569; min-width: 50px; text-align: center; }
+    .items-list .item-sub { color: #059669; font-weight: 600; min-width: 100px; text-align: right; }
+    .status-completed-big {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #d1fae5;
+        border: 1px solid #6ee7b7;
+        color: #047857;
+        border-radius: 8px;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    .status-pending-big {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        color: #b45309;
+        border-radius: 8px;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .btn-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+    .btn-action {
+        padding: 0.7rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .btn-action-primary {
+        background: linear-gradient(135deg, #059669, #0d9488);
+        color: #fff;
+        border: none;
+    }
+    .btn-action-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(5,150,105,0.35); color: #fff; }
+    .btn-action-secondary {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+    }
+    .btn-action-secondary:hover { background: #f1f5f9; color: #0f172a; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="success-page">
+    <div class="success-card">
+        <!-- Success Icon -->
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+
+        <h1 class="success-title">Pesanan Berhasil Dibuat! 🎉</h1>
+        <p class="success-subtitle">Pesanan Anda telah berhasil dibeli dan diproses oleh NABZ SNACK.</p>
+
+        <!-- Invoice Number -->
+        <div class="invoice-number-badge">
+            {{ transaction.invoice_number }}
+        </div>
+
+        <!-- Order Details -->
+        <div class="invoice-box">
+            <div class="invoice-row">
+                <span class="lbl">Nama Penerima</span>
+                <span class="val">{{ transaction.customer_name }}</span>
+            </div>
+            <div class="invoice-row">
+                <span class="lbl">Tanggal Pesanan</span>
+                <span class="val">{{ transaction.created_at.strftime('%d/%m/%Y %H:%M') }}</span>
+            </div>
+            <div class="invoice-row">
+                <span class="lbl">Status</span>
+                <span class="val">
+                    {% if transaction.status == 'Completed' or transaction.status == 'Sukses' or transaction.status == 'Berhasil' %}
+                    <span class="status-completed-big">
+                        <i class="fas fa-check-circle"></i> Berhasil Membeli
+                    </span>
+                    {% elif transaction.status == 'Pending' %}
+                    <span class="status-pending-big">
+                        <i class="fas fa-clock"></i> Pending
+                    </span>
+                    {% else %}
+                    <span class="status-badge status-{{ transaction.status | lower }}">
+                        {{ transaction.status }}
+                    </span>
+                    {% endif %}
+                </span>
+            </div>
+            {% if transaction.notes %}
+            <div class="invoice-row">
+                <span class="lbl">Catatan</span>
+                <span class="val">{{ transaction.notes }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Items Purchased -->
+        <div class="invoice-box">
+            <div style="font-weight:700; color:#0f172a; font-size:0.9rem; margin-bottom:0.5rem;">
+                <i class="fas fa-list me-1 text-success"></i> Detail Item
+            </div>
+            <div class="items-list">
+                {% for item in transaction.items %}
+                <div class="item-row">
+                    <span class="item-name">{{ item.product.name if item.product else 'Produk' }}</span>
+                    <span class="item-qty">x{{ item.quantity }}</span>
+                    <span class="item-sub">Rp {{ "{:,.0f}".format(item.price_at_transaction * item.quantity).replace(',', '.') }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="invoice-row total-row">
+                <span class="lbl" style="font-weight:600; color:#475569;">Total Bayar</span>
+                <span class="val">Rp {{ "{:,.0f}".format(transaction.total_price).replace(',', '.') }}</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-actions">
+            <a href="{{ url_for('download_invoice', trans_id=transaction.id) }}" class="btn-action btn-action-primary" target="_blank">
+                <i class="fas fa-download"></i> Download Invoice PDF
+            </a>
+            <a href="{% if session.get('user_role') == 'admin' %}{{ url_for('admin_dashboard') }}{% elif session.get('user_role') == 'cashier' %}{{ url_for('cashier_dashboard') }}{% else %}{{ url_for('customer_dashboard') }}{% endif %}" class="btn-action btn-action-secondary">
+                <i class="fas fa-shopping-bag"></i> Lanjut Belanja
+            </a>
+        </div>
+
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Anda bisa melihat status pesanan di halaman Riwayat Pesanan
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
